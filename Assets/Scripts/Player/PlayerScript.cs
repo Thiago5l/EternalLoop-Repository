@@ -7,6 +7,7 @@ public class PlayerScript : MonoBehaviour
 
     public int vida;
     public float speed;
+    public float shieldTime;
     public enum state { idle, run, shield, attack1, attack2, jump, hurt, die, finishJump, fall };
     public state MyState;
 
@@ -14,7 +15,9 @@ public class PlayerScript : MonoBehaviour
     private Animator myanimator;
     private Rigidbody2D myrigid;
 
+    private bool onShield;
 
+    public GameObject shield;
 
 
 
@@ -26,7 +29,7 @@ public class PlayerScript : MonoBehaviour
 
         myanimator = GetComponent<Animator>();
         myrigid = GetComponent<Rigidbody2D>();
-
+        onShield = false;
     }
 
     // Update is called once per frame
@@ -88,6 +91,11 @@ public class PlayerScript : MonoBehaviour
             myrigid.gravityScale = 1;
 
         }
+
+        if (Input.GetButtonDown("Fire3")){
+            SetState(state.shield);
+            myrigid.gravityScale = 1;
+        }
     }
 
 
@@ -107,6 +115,32 @@ public class PlayerScript : MonoBehaviour
     private void FunctionShield()
     {
         myanimator.Play("shield");
+
+        if (onShield != true)
+        {
+            shield.GetComponent<SpriteRenderer>();
+            onShield = true;
+            Invoke("noShield", shieldTime);
+        }
+    }
+
+    /*private void checkShield()
+    {
+        if (Input.GetKeyDown(KeyCode.E) && !onShield)
+        {
+            shield.SetActive(true);
+            onShield = true;
+            Invoke("noShield", shieldTime);
+        }
+        
+        //turn off the shield
+
+    }*/
+
+    private void noShoeld()
+    {
+        shield.SetActive(false);
+        onShield = false;
     }
 
 
