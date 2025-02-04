@@ -1,12 +1,17 @@
+using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEditor.VersionControl.Asset;
+using static UnityEngine.Rendering.DebugUI;
 
 public class PlayerScript : MonoBehaviour
 {
 
     public int vida;
-    public float speed;
+    public float speed, jump_velocity_x, jump_velocity_y;
+
     public float shieldTime;
     public enum state { idle, run, shield, attack1, attack2, jump, hurt, die, finishJump, fall };
     public state MyState;
@@ -15,9 +20,8 @@ public class PlayerScript : MonoBehaviour
     private Animator myanimator;
     private Rigidbody2D myrigid;
 
-    private bool onShield;
 
-    public GameObject shield;
+    private GameObject escudo;
 
 
 
@@ -29,7 +33,8 @@ public class PlayerScript : MonoBehaviour
 
         myanimator = GetComponent<Animator>();
         myrigid = GetComponent<Rigidbody2D>();
-        onShield = false;
+        escudo = GameObject.Find("shield");
+        
     }
 
     // Update is called once per frame
@@ -53,7 +58,7 @@ public class PlayerScript : MonoBehaviour
 
                 break;
             case state.jump:
-
+                FunctionJump();
                 break;
             case state.hurt:
 
@@ -62,15 +67,17 @@ public class PlayerScript : MonoBehaviour
 
                 break;
             case state.fall:
-
+                FunctiionFall();
                 break;
             case state.finishJump:
-
+                FunctionFinishJump();
                 break;
             default:
                 print("incorrect State");
                 break;
         }
+
+        
     }
     private void SetState(state newstate)
     {
@@ -84,7 +91,7 @@ public class PlayerScript : MonoBehaviour
 
         ///////////////////////////////////////////
 
-
+        //RUN
         if (Input.GetAxisRaw("Horizontal") != 0)
         {
             SetState(state.run);
@@ -92,61 +99,138 @@ public class PlayerScript : MonoBehaviour
 
         }
 
+        //..............................................
+        //SHIELD
         if (Input.GetButtonDown("Fire3")){
             SetState(state.shield);
             myrigid.gravityScale = 1;
+        }
+
+        //..............................................
+        //JUMP
+
+        if(Input.GetButtonDown("Jump") && GrouncCheckScript.tocosuelo )
+        {
+            SetState(state.jump);
+            myrigid.gravityScale = 1;
+        }
+
+        if (myrigid.velocity.y < 0)
+        {
+            SetState(state.fall);
         }
     }
 
 
     private void FunctionRun()
     {
-
+        myanimator.Play("Player_Run");
         UpdateMuvment();
 
         ///////////////////////////////////////////
 
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            SetState(state.shield);
+            myrigid.gravityScale = 1;
+        }
+
         if (Input.GetAxisRaw("Horizontal") == 0)
         {
-            SetState(state.run);
+            SetState(state.idle);
+        }
+
+        if (Input.GetButtonDown("Jump") && GrouncCheckScript.tocosuelo)
+        {
+            SetState(state.jump);
+            myrigid.gravityScale = 1;
         }
     }
 
     private void FunctionShield()
     {
-        myanimator.Play("shield");
-
-        if (onShield != true)
-        {
-            shield.GetComponent<SpriteRenderer>();
-            onShield = true;
-            Invoke("noShield", shieldTime);
-        }
+        myanimator.Play("Player_Shield");
+        ///////////////////////////////////////////
     }
 
-    /*private void checkShield()
+
+    private void FunctionJump()
     {
-        if (Input.GetKeyDown(KeyCode.E) && !onShield)
+
+        // myanimator.Play("Player_Jump");
+
+        /*if (Input.GetAxisRaw("Horizontal") < 0)
         {
-            shield.SetActive(true);
-            onShield = true;
-            Invoke("noShield", shieldTime);
+            myrigid.velocity = new Vector2(-jump_velocity_x, jump_velocity_y);
+
+        }
+
+        if (Input.GetAxisRaw("Horizontal") > 0)
+        {
+            myrigid.velocity = new Vector2(jump_velocity_x, jump_velocity_y);
+        }
+
+        if (Input.GetAxisRaw("Horizontal") == 0)
+        {
+            myrigid.velocity = new Vector2(0, jump_velocity_y);
+        }*/
+
+        if (Input.GetAxisRaw("Horizontal") < 0)
+        {
+            myrigid.velocity = new Vector2(-jump_velocity_x, jump_velocity_y);
+        }
+        if (Input.GetAxisRaw("Horizontal") == 0)
+        {
+            myrigid.velocity = new Vector3(0, jump_velocity_y);
+        }
+        if (Input.GetAxisRaw("Horizontal") > 0)
+        {
+            myrigid.velocity = new Vector3(jump_velocity_x, jump_velocity_y);
         }
         
-        //turn off the shield
+        UpdateMuvment(); 
 
-    }*/
+        ///////////////////////////////////////////
 
-    private void noShoeld()
-    {
-        shield.SetActive(false);
-        onShield = false;
+
+        SetState(state.finishJump);
+
+
     }
 
+    private void FunctionFinishJump()
+    {
 
+        ///////////////////////////////////////////
+        
+        if (myrigid.velocity.y < 0)
+        {
+            SetState(state.fall);
+        }
+        UpdateMuvment();
 
+    }
 
+    private void FunctiionFall()
+    {
 
+        //myanimator.Play("Player_Falling");
+        if (GrouncCheckScript.tocosuelo)
+        {
+
+            SetState(state.idle);
+
+        }
+
+        UpdateMuvment();
+        ///////////////////////////////////////////
+
+        if (myrigid.velocity.y == 0 && GrouncCheckScript.tocosuelo)
+        {
+            SetState(state.idle);
+        }
+
+    }
 
 
 
